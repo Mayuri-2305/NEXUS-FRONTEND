@@ -1,0 +1,137 @@
+.planner-page {
+  min-height: 100vh;
+  background: #f7f9fc;
+  padding: 50px 8%;
+  color: #172033;
+}
+
+.planner-header {
+  max-width: 850px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.small-title {
+  color: #1976d2;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 14px;
+}
+
+.planner-header h1 {
+  font-size: 42px;
+  margin: 12px 0;
+}
+
+.planner-header p {
+  color: #64748b;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.planner-card {
+  max-width: 900px;
+  margin: 25px auto;
+  padding: 30px;
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #e5eaf0;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.planner-card h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 22px;
+}
+
+.planner-card label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.planner-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 15px;
+  margin-bottom: 20px;
+  border: 1px solid #d7dee8;
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+}
+
+.planner-card input:focus {
+  border-color: #1976d2;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 25px;
+}
+
+.helper-text {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.planner-results {
+  max-width: 900px;
+  margin: auto;
+}
+
+.result-card {
+  background: #eef6ff;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.result-grid div {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.result-grid span {
+  display: block;
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.result-grid strong {
+  font-size: 21px;
+}
+
+.goal-result {
+  margin-top: 25px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border-left: 5px solid #1976d2;
+}
+
+.goal-result h3 {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .planner-page {
+    padding: 30px 20px;
+  }
+
+  .planner-header h1 {
+    font-size: 32px;
+  }
+
+  .input-grid,
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+}
