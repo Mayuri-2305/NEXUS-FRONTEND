@@ -1,17 +1,159 @@
+
+import { useState } from "react";
 import "./App.css";
 import FinancialPlanner from "./components/FinancialPlanner";
-
-import {useState} from "react";
+import api from "./api";
 
 function App() {
-  const [showPlanner, setShowPlanner]=useState(false);
-  if(showPlanner){
-    return<FinancialPlanner/>;
+  const [showPlanner, setShowPlanner] = useState(false);
+  const [authMode, setAuthMode] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [loggedInUser, setLoggedInUser] = useState(null);
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthMessage("Please wait...");
+
+    try {
+      if (authMode === "register") {
+        await api.post("/api/users", {
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        });
+
+        setAuthMessage("Registration successful! You can now log in.");
+        setAuthMode("login");
+        setName("");
+        setPassword("");
+      } else {
+        const response = await api.post("/api/users/login", {
+          email: email.trim(),
+          password,
+        });
+
+        setLoggedInUser(response.data);
+        setAuthMessage("Login successful!");
+        setAuthMode("");
+        setShowPlanner(true);
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+
+      if (error.response?.status === 409) {
+        setAuthMessage("This email is already registered. Please log in.");
+      } else if (error.response?.status === 401 ||
+                 error.response?.status === 403) {
+        setAuthMessage("Invalid email or password.");
+      } else if (error.response?.status === 400) {
+        setAuthMessage("Please check your details and try again.");
+      } else {
+        setAuthMessage(
+          error.response?.data?.message ||
+          "Request failed. Check that the backend is running and try again."
+        );
+      }
+    }
+  };
+
+  const logout = () => {
+    setLoggedInUser(null);
+    setShowPlanner(false);
+    setAuthMode("");
+    setEmail("");
+    setPassword("");
+    setAuthMessage("You have logged out.");
+  };
+
+  if (showPlanner) {
+    return (
+      <div>
+        <button type="button" onClick={() => setShowPlanner(false)}>
+          Back to Home
+        </button>
+        <FinancialPlanner />
+      </div>
+    );
   }
+
+  if (authMode) {
+    return (
+      <div className="auth-container">
+        <h2>
+          {authMode === "login"
+            ? "Login to NEXUS"
+            : "Create Your NEXUS Account"}
+        </h2>
+
+        <form onSubmit={handleAuth}>
+          {authMode === "register" && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          )}
+
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit" className="primary-btn">
+            {authMode === "login" ? "Login" : "Create Account"}
+          </button>
+        </form>
+
+        {authMessage && <p role="status">{authMessage}</p>}
+
+        <p>
+          {authMode === "login"
+            ? "New to NEXUS?"
+            : "Already have an account?"}
+          {" "}
+          <button
+            type="button"
+            className="login-btn"
+            onClick={() => {
+              setAuthMode(authMode === "login" ? "register" : "login");
+              setAuthMessage("");
+            }}
+          >
+            {authMode === "login" ? "Register" : "Login"}
+          </button>
+        </p>
+
+        <button
+          type="button"
+          onClick={() => {
+            setAuthMode("");
+            setAuthMessage("");
+          }}
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="nexus-app">
-
-      {/* Navigation Bar */}
       <nav className="navbar">
         <div className="logo">
           <span className="logo-icon">N</span>
@@ -25,22 +167,59 @@ function App() {
         </div>
 
         <div className="nav-buttons">
-          <button className="login-btn">Login</button>
-          <button className="primary-btn">Get Started</button>
+          {loggedInUser ? (
+            <>
+              <span>
+                Welcome, {loggedInUser.name || loggedInUser.email}
+              </span>
+              <button type="button" onClick={logout}>
+                Logout
+              </button>
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => setShowPlanner(true)}
+              >
+                Open Planner
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="login-btn"
+                onClick={() => {
+                  setAuthMode("login");
+                  setAuthMessage("");
+                }}
+              >
+                Login
+              </button>
+
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => {
+                  setAuthMode("register");
+                  setAuthMessage("");
+                }}
+              >
+                Get Started
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className="hero">
         <div className="hero-content">
-
           <div className="badge">
             ✦ Smart Financial Planning for Everyone
           </div>
 
           <h1>
-            Take Control of Your
-            <span> Financial Future</span>
+            Take Control of Your{" "}
+            <span>Financial Future</span>
           </h1>
 
           <p>
@@ -50,191 +229,76 @@ function App() {
           </p>
 
           <div className="hero-buttons">
-            <button 
-            className="primary-btn"
-            onClick={()=>setShowPlanner(true)}
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => {
+                if (loggedInUser) {
+                  setShowPlanner(true);
+                } else {
+                  setAuthMode("register");
+                  setAuthMessage("");
+                }
+              }}
             >
               Start Planning →
             </button>
 
-            <button className="secondary-btn">
+            <button
+              type="button"
+              className="login-btn"
+              onClick={() =>
+                document.getElementById("features")?.scrollIntoView({
+                  behavior: "smooth",
+                })
+              }
+            >
               Explore NEXUS
             </button>
           </div>
 
-          <div className="highlights">
-            <div>✓ Simple</div>
-            <div>✓ Educational</div>
-            <div>✓ Built for India</div>
-          </div>
-
+          <p className="hero-points">
+            ✓ Simple &nbsp;&nbsp; ✓ Educational &nbsp;&nbsp; ✓ Built for India
+          </p>
         </div>
       </section>
 
-      {/* Financial Overview */}
-      <section className="overview">
-        <div className="section-heading">
-          <p className="small-title">MONTHLY OVERVIEW</p>
-          <h2>Understand Your Financial Health</h2>
-          <p>
-            Get a clear picture of where your money goes every month.
-          </p>
-        </div>
-
-        <div className="cards">
-
-          <div className="financial-card">
-            <div className="card-icon">₹</div>
-            <p>Monthly Income</p>
-            <h3>₹50,000</h3>
-            <span>+8% this month</span>
-          </div>
-
-          <div className="financial-card">
-            <div className="card-icon">↗</div>
-            <p>Total Expenses</p>
-            <h3>₹32,400</h3>
-            <span>64.8% of income</span>
-          </div>
-
-          <div className="financial-card">
-            <div className="card-icon">💰</div>
-            <p>Total Savings</p>
-            <h3>₹12,600</h3>
-            <span>25.2% of income</span>
-          </div>
-
-          <div className="financial-card">
-            <div className="card-icon">🎯</div>
-            <p>Active Goals</p>
-            <h3>3</h3>
-            <span>₹68,000 planned</span>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="features" id="features">
-
-        <div className="section-heading">
-          <p className="small-title">WHAT NEXUS OFFERS</p>
-          <h2>Everything You Need to Plan Better</h2>
-          <p>
-            Understand your money, make informed decisions and work
-            towards your financial goals.
-          </p>
-        </div>
-
-        <div className="feature-grid">
-
-          <div className="feature-card">
-            <div className="feature-icon">💵</div>
-            <h3>Income Management</h3>
-            <p>
-              Record and understand your monthly income and sources.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">📊</div>
-            <h3>Expense Tracking</h3>
-            <p>
-              Track your spending and understand where your money goes.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">📋</div>
-            <h3>Budget Planner</h3>
-            <p>
-              Create monthly budgets and monitor your spending.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">🎯</div>
+      <section id="features" className="features-section">
+        <h2>Features</h2>
+        <div className="features-grid">
+          <article>
+            <h3>Income & Expenses</h3>
+            <p>Record your income and track everyday expenses.</p>
+          </article>
+          <article>
+            <h3>Budget Planning</h3>
+            <p>Understand your spending and plan your monthly budget.</p>
+          </article>
+          <article>
             <h3>Financial Goals</h3>
-            <p>
-              Set savings goals and track your progress over time.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">🔄</div>
-            <h3>What-If Simulator</h3>
-            <p>
-              Explore how changes in income and expenses affect your plans.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">🧮</div>
-            <h3>Financial Calculators</h3>
-            <p>
-              Calculate EMI, interest, savings goals and affordability.
-            </p>
-          </div>
-
+            <p>Plan savings for purchases and future goals.</p>
+          </article>
         </div>
-
       </section>
 
-      {/* How It Works */}
-      <section className="how-it-works" id="how-it-works">
-
-        <div className="section-heading">
-          <p className="small-title">HOW IT WORKS</p>
-          <h2>Plan Your Finances in 4 Simple Steps</h2>
-        </div>
-
-        <div className="steps">
-
-          <div className="step">
-            <div className="step-number">01</div>
-            <h3>Add Your Income</h3>
-            <p>Enter your monthly income and other sources.</p>
-          </div>
-
-          <div className="step">
-            <div className="step-number">02</div>
-            <h3>Track Expenses</h3>
-            <p>Record your daily and monthly expenses.</p>
-          </div>
-
-          <div className="step">
-            <div className="step-number">03</div>
-            <h3>Set Goals</h3>
-            <p>Create savings and financial goals.</p>
-          </div>
-
-          <div className="step">
-            <div className="step-number">04</div>
-            <h3>Plan & Improve</h3>
-            <p>Use NEXUS insights and simulations to plan better.</p>
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="logo">
-          <span className="logo-icon">N</span>
-          <span>NEXUS</span>
-        </div>
-
+      <section id="how-it-works" className="features-section">
+        <h2>How It Works</h2>
         <p>
-          Smart financial planning for a better tomorrow.
+          Create an account, enter your financial details, and use your
+          plan to understand your savings goals.
         </p>
+      </section>
 
-        <p className="copyright">
-          © 2026 NEXUS. Financial awareness and planning platform.
+      <section id="learn" className="features-section">
+        <h2>Learn About Money</h2>
+        <p>
+          Build better budgeting and saving habits with NEXUS.
         </p>
+      </section>
+
+      <footer>
+        <p>© NEXUS — Personalized Financial Planning</p>
       </footer>
-      {showPlanner && <FinancialPlanner />}
-
     </div>
   );
 }

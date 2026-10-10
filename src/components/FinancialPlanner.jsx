@@ -27,7 +27,7 @@ function FinancialPlanner() {
   const [saveMessage, setSaveMessage] = useState("");
   const saveFinancialPlan = async () => {
   try {
-    const response = await api.post("/api/financial-plans", {
+    await api.post("/api/financial-plans", {
       salary: Number(salary) || 0,
       rent: Number(rent) || 0,
       food: Number(food) || 0,
